@@ -1,0 +1,36 @@
+# === Build folders ===
+build/
+driver/*.o
+driver/*.ko
+driver/*.mod.c
+driver/*.symvers
+driver/*.order
+driver/*.cmd
+
+# === User-space build artifacts ===
+user/*.o
+user/*.obj
+user/*.exe
+user/*.out
+
+# === CMake files ===
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# === CLion files ===
+.idea/
+*.iml
+*.iws
+
+# === OS temp files ===
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# === Logs / temporary output ===
+*.log
+*.tmp
