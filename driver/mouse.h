@@ -1,20 +1,23 @@
 #ifndef MOUSE_H
 #define MOUSE_H
 
+#include <linux/cdev.h>
 #include <linux/usb.h>
 #include <linux/fs.h>
-#include <linux/cdev.h>
+#include <linux/input.h>
+#include <linux/types.h>
 
 #define VENDOR_ID   0x046d
 #define PRODUCT_ID  0xc092
 #define BUFFER_SIZE 8
 
 typedef struct mouse_dev_t {
-    struct usb_device *dev;
+    struct usb_device *usb_dev;
     struct usb_interface *intfs;
+    struct input_dev *input_dev;
     struct urb *urb;
     unsigned char *buffer;
-    u8 dpi;
+
 } mouse_dev_t;
 
 // mouse_usb

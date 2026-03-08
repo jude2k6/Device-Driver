@@ -4,18 +4,53 @@
 struct usb_device_id mouse_usb_table[] = {{USB_DEVICE(VENDOR_ID, PRODUCT_ID)}, {}};
 MODULE_DEVICE_TABLE(usb, mouse_usb_table);
 
+
+
+
+static void process_data(mouse_dev_t *mouse,unsigned char *data) {
+
+    s16 x = (s16)(data[2] | (data[3] << 8));
+    s16 y = (s16)(data[4] | (data[5] << 8));
+
+    // regular input subsystem
+    input_report_key(mouse->input_dev, BTN_LEFT,   data[0] & 0x01);
+    input_report_key(mouse->input_dev, BTN_RIGHT,  data[0] & 0x02);
+    input_report_key(mouse->input_dev, BTN_MIDDLE, data[0] & 0x04);
+input_report_key(mouse->input_dev, BTN_FORWARD,  data[0] & 0x10);
+    input_report_key(mouse->input_dev, BTN_BACK, data[0] & 0x08);
+    input_report_rel(mouse->input_dev, REL_WHEEL, (s8)data[6]);
+    input_report_rel(mouse->input_dev, REL_X, x);
+    input_report_rel(mouse->input_dev, REL_Y, y);
+    input_sync(mouse->input_dev);
+}
+
+static int init_input_dev(mouse_dev_t *mouse) {
+    mouse->input_dev = input_allocate_device();
+    mouse->input_dev->name = "G203 Mouse";
+    mouse->input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_REL);
+    set_bit(BTN_LEFT,   mouse->input_dev->keybit);
+    set_bit(BTN_RIGHT,  mouse->input_dev->keybit);
+    set_bit(BTN_MIDDLE, mouse->input_dev->keybit);
+    set_bit(BTN_BACK, mouse->input_dev->keybit);
+    set_bit(BTN_FORWARD, mouse->input_dev->keybit);
+    set_bit(REL_WHEEL, mouse->input_dev->relbit);
+    set_bit(REL_X,      mouse->input_dev->relbit);
+    set_bit(REL_Y,      mouse->input_dev->relbit);
+    return input_register_device(mouse->input_dev);
+}
 static void mouse_irq(struct urb *urb) {
     if (urb->status) {
         printk(KERN_ERR "URB error: %d", urb->status);
         return;
     }
+        mouse_dev_t *mouse = urb->context;
 
     unsigned char *data = urb->transfer_buffer;
     printk("mouse len:%d | %02x %02x %02x %02x %02x %02x %02x %02x",
     urb->actual_length,
     data[0], data[1], data[2], data[3],
     data[4], data[5], data[6], data[7]);
-
+    process_data(mouse,data);
     usb_submit_urb(urb, GFP_ATOMIC);
 }
 
@@ -30,7 +65,7 @@ static int mouse_probe(struct usb_interface *intfs, const struct usb_device_id *
     if (!mouse->buffer) {
         goto buffer_free;
     }
-    mouse->dev = interface_to_usbdev(intfs);
+    mouse->usb_dev = interface_to_usbdev(intfs);
     struct usb_endpoint_descriptor *ep_des = &intfs->cur_altsetting->endpoint->desc;
     mouse->intfs = intfs;
     usb_set_intfdata(intfs, mouse);
@@ -39,10 +74,14 @@ static int mouse_probe(struct usb_interface *intfs, const struct usb_device_id *
         printk(KERN_ERR "Mouse urb not sent");
         goto urb_free;
     }
+    if (init_input_dev(mouse)) {
+        printk(KERN_ERR "ERROR input_register_device");
+        goto input_free;
+    }
     usb_fill_int_urb(
         mouse->urb,
-        mouse->dev,
-        usb_rcvintpipe(mouse->dev, ep_des->bEndpointAddress),
+        mouse->usb_dev,
+        usb_rcvintpipe(mouse->usb_dev, ep_des->bEndpointAddress),
         mouse->buffer,
         BUFFER_SIZE,
         mouse_irq,
@@ -59,6 +98,8 @@ static int mouse_probe(struct usb_interface *intfs, const struct usb_device_id *
     }
     printk("MOUSE BOUND");
     return 0;
+input_free:
+    input_unregister_device(mouse->input_dev);
 urb_free:
     usb_free_urb(mouse->urb);
 buffer_free:
@@ -70,6 +111,7 @@ mouse_free:
 
 void mouse_disconnect(struct usb_interface *intfs) {
     mouse_dev_t *mouse = usb_get_intfdata(intfs);
+    input_unregister_device(mouse->input_dev);
     usb_kill_urb(mouse->urb);
     usb_free_urb(mouse->urb);
     kfree(mouse->buffer);
