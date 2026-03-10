@@ -17,7 +17,6 @@ user/*.out
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
-Makefile
 
 # === CLion files ===
 .idea/
