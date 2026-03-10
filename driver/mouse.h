@@ -37,7 +37,7 @@ ssize_t mouse_read(struct file *f, char __user *user, size_t l, loff_t *o);
 
 int set_led_colour(unsigned char r, unsigned char g, unsigned char b, unsigned char mode);
 
-int set_dpi();
+int set_dpi(void);
 
 #endif
 
