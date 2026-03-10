@@ -4,9 +4,22 @@ static dev_t dev;
 static struct cdev cdev;
 static struct class *mouse_class;
 
-ssize_t mouse_read(struct file *f, char __user *user, size_t l, loff_t *o) {
+ssize_t mouse_read(struct file *f, char __user *user_buffer, size_t l, loff_t *o) {
+    mouse->read_ready = false;
+    if (!(mouse->read_ready)) {
+        wait_event_interruptible(mouse->read_queue, mouse->read_ready);
+    }
+
+
+    printk("Data sent | %02x %02x %02x %02x %02x %02x %02x %02x",
+
+           mouse->buffer[0], mouse->buffer[1], mouse->buffer[2], mouse->buffer[3],
+           mouse->buffer[4], mouse->buffer[5], mouse->buffer[6], mouse->buffer[7]);
+
+
+    copy_to_user(user_buffer, mouse->buffer,BUFFER_SIZE);
     printk("Read Called");
-    return 0;
+    return BUFFER_SIZE;
 }
 
 static struct file_operations fops = {
@@ -24,6 +37,8 @@ int mouse_char_init(void) {
     if (cdev_add(&cdev, dev, 1)) {
         printk(KERN_ERR "ERROR cdev_add");
         goto cdev_fail;
+
+
     }
 
     mouse_class = class_create("MOUSE");
@@ -36,7 +51,7 @@ int mouse_char_init(void) {
         printk(KERN_ERR "ERROR device_create");
         goto device_fail;
     }
-
+    init_waitqueue_head(&mouse->read_queue);
     printk(KERN_INFO "Mouse char init SUCCESS\n");
     return 0;
 
