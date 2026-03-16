@@ -8,6 +8,8 @@
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/wait.h>
+#include <linux/spinlock.h>
+
 
 #define VENDOR_ID   0x046d
 #define PRODUCT_ID  0xc092
@@ -22,6 +24,12 @@ typedef struct mouse_dev_t {
     unsigned char *buffer;
     bool read_ready;
     struct wait_queue_head read_queue;
+
+    spinlock_t lock;
+    bool connected;
+    u64 packets_seen;
+    u8 buttons_raw;
+    s8 last_wheel;
 } mouse_dev_t;
 
 // mouse_usb
@@ -39,5 +47,8 @@ int set_led_colour(unsigned char r, unsigned char g, unsigned char b, unsigned c
 
 int set_dpi(void);
 
+int mouse_proc_init(void);
+
+void mouse_proc_exit(void);
 #endif
 

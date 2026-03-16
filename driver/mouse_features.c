@@ -1,9 +1,9 @@
 
 // max for each colour 255
 int set_led_colour(unsigned char r,unsigned char g, unsigned char b,unsigned char mode) {
-
+	return 0;
 }
 
-int set_dpi() {
-
+int set_dpi(void) {
+	return 0;
 }
