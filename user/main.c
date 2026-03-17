@@ -1,4 +1,27 @@
 #include <stdio.h>
+#include "device_api.h"
+
+int main(void) {
+    unsigned char data[DATA_SIZE];
+
+    int fd = mouse_open();
+    if (fd<0) {
+        return 1;
+    }
+
+    printf("Mouse device listening for events\n");
+    while (1) {
+        if (mouse_read_data(fd, data) < 0) {
+            break;
+        }
+        mouse_print_event(data);
+    }
+    mouse_close(fd);
+    return 0;
+}
+
+/* OLD VERSION
+ #include <stdio.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -21,3 +44,6 @@ int main(int argc, char *argv[]) {
     close(fd);
     return 0;
 }
+
+//data is 8 bit from char.c mouse_read, left click instead of printing 0 1 for left click, print left click, right, scroll wheel, side. basically trans;ate the 8 bit into a human readable output.
+*/
