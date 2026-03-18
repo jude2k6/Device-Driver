@@ -22,7 +22,6 @@ int main(int argc, char *argv[]) {
     if (strcmp(argv[1], "colour") == 0) {
         if (argc != 5) {
             fprintf(stderr, "Error: 'colour' requires r g b arguments\n");
-            usage(argv[0]);
             ret = 1;
             goto done;
         }
