@@ -19,6 +19,31 @@ static void process_data(mouse_dev_t *mouse, unsigned char *data) {
     input_report_rel(mouse->input_dev, REL_Y, y);
     input_sync(mouse->input_dev);
 }
+static int enable_software_control(mouse_dev_t *mouse) {
+    // Puts the G203 Lightsync into software control mode.
+    // Without this the firmware stays in hardware-profile mode and ignores
+    // subsequent colour commands after ~30 seconds.
+    // Packet reverse-engineered by the OpenRGB project.
+    unsigned char *buf = kzalloc(20, GFP_KERNEL);
+    if (!buf)
+        return -ENOMEM;
+
+    buf[0x00] = 0x11;
+    buf[0x01] = 0xFF;
+    buf[0x02] = 0x0E;
+    buf[0x03] = 0x50;
+    buf[0x04] = 0x01;
+    buf[0x05] = 0x03;
+    buf[0x06] = 0x07;
+
+    int ret = usb_control_msg(mouse->usb_dev,
+                              usb_sndctrlpipe(mouse->usb_dev, 0),
+                              0x09, 0x21, 0x0211, 1,
+                              buf, 20, USB_CTRL_SET_TIMEOUT);
+    kfree(buf);
+    printk(KERN_INFO "enable_software_control: returned %d\n", ret);
+    return (ret < 0) ? ret : 0;
+}
 
 static int init_input_dev(mouse_dev_t *mouse) {
     mouse->input_dev = input_allocate_device();
@@ -71,11 +96,9 @@ static int mouse_probe(struct usb_interface *intfs, const struct usb_device_id *
     usb_set_intfdata(intfs, mouse);
     init_waitqueue_head(&mouse->read_queue);
     mouse->urb = usb_alloc_urb(0,GFP_KERNEL);
+    mouse->transaction_open = 1;
 
-    if (mouse_char_init(mouse)) {
-        printk("Error registering char");
-        usb_deregister(&mouse_driver);
-    }
+
     if (!mouse->urb) {
         printk(KERN_ERR "Mouse urb not sent");
         goto urb_free;
@@ -102,6 +125,12 @@ static int mouse_probe(struct usb_interface *intfs, const struct usb_device_id *
         printk(KERN_ERR "Mouse urb not sent ");
         goto urb_free;
     }
+
+    if (mouse_char_init(mouse)) {
+        printk("Error registering char");
+        usb_deregister(&mouse_driver);
+    }
+
     printk("MOUSE BOUND");
     return 0;
 input_free:
@@ -121,6 +150,7 @@ void mouse_disconnect(struct usb_interface *intfs) {
     input_unregister_device(mouse->input_dev);
     usb_kill_urb(mouse->urb);
     usb_free_urb(mouse->urb);
+    mouse_char_exit(mouse);
     kfree(mouse->buffer);
     kfree(mouse);
     printk("MOUSE DISSCONNECTED");

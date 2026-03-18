@@ -4,16 +4,14 @@
 
 #include "mouse.h"
 
-static dev_t dev;
 static struct class *mouse_class;
-static mouse_dev_t *mouse_ref;
 
 ssize_t mouse_read(struct file *f, char __user *user_buffer, size_t l, loff_t *o) {
     mouse_dev_t *mouse = (mouse_dev_t *)f->private_data;
-    mouse->read_ready = true;
-    if (!(mouse->read_ready)) {
+    if (!mouse->read_ready) {
         wait_event_interruptible(mouse->read_queue, mouse->read_ready);
     }
+    mouse->read_ready = false; 
 
 
     printk("Data sent | %02x %02x %02x %02x %02x %02x %02x %02x",
@@ -49,13 +47,12 @@ static struct file_operations fops = {
 
 
 int mouse_char_init(mouse_dev_t* mouse) {
-    mouse_ref = mouse;
-    if (alloc_chrdev_region(&dev, 0, 1, "MOUSE")) {
+    if (alloc_chrdev_region(&mouse->dev, 0, 1, "MOUSE")) {
         printk(KERN_ERR "ERROR alloc_chrdev_region");
         goto alloc_fail;
     }
     cdev_init(&mouse->cdev, &fops);
-    if (cdev_add(&mouse->cdev, dev, 1)) {
+    if (cdev_add(&mouse->cdev, mouse->dev, 1)) {
         printk(KERN_ERR "ERROR cdev_add");
         goto cdev_fail;
     }
@@ -66,7 +63,7 @@ int mouse_char_init(mouse_dev_t* mouse) {
         goto class_fail;
     }
 
-    if (IS_ERR(device_create(mouse_class, NULL, dev, NULL, "MOUSE"))) {
+    if (IS_ERR(device_create(mouse_class, NULL, mouse->dev, NULL, "MOUSE"))) {
         printk(KERN_ERR "ERROR device_create");
         goto device_fail;
     }
@@ -78,17 +75,16 @@ device_fail:
 class_fail:
     cdev_del(&mouse->cdev);
 cdev_fail:
-    unregister_chrdev_region(dev, 1);
+    unregister_chrdev_region(mouse->dev, 1);
 alloc_fail:
     return -1;
 }
 
-void mouse_char_exit(void) {
-    if (mouse_ref)
-        cdev_del(&mouse_ref->cdev);
-    device_destroy(mouse_class, dev);
+void mouse_char_exit(mouse_dev_t* mouse) {
+    device_destroy(mouse_class, mouse->dev);
     class_destroy(mouse_class);
-    unregister_chrdev_region(dev, 1);
+    cdev_del(&mouse->cdev);
+    unregister_chrdev_region(mouse->dev, 1);
 
     printk(KERN_INFO "Mouse char cleaned\n");
 }

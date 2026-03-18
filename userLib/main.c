@@ -16,9 +16,9 @@ int main(int argc, char *argv[]) {
 
     struct led_packet p = {
         .mode = 0x01,
-        .r = 255,
+        .r = 1,
         .g = 1,
-        .b = 1
+        .b = 255
     };
 
     // 2. Check the return value of ioctl
@@ -27,6 +27,8 @@ int main(int argc, char *argv[]) {
         close(fd);
         return 1;
     }
+
+
 
     printf("LED command sent successfully!\n");
 

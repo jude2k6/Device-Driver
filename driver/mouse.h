@@ -8,6 +8,7 @@
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/wait.h>
+#include <linux/delay.h>
 #include "../include/shared_ioctl.h"
 #include "mouse_features.h"
 
@@ -23,10 +24,12 @@ typedef struct mouse_dev_t {
     struct usb_interface *intfs;
     struct urb *urb;
     struct input_dev *input_dev;
+    dev_t dev;
     struct cdev cdev;
     unsigned char *buffer;
     bool read_ready;
     struct wait_queue_head read_queue;
+    bool transaction_open;
 } mouse_dev_t;
 
 // mouse_usb
@@ -35,7 +38,7 @@ extern struct usb_driver mouse_driver;
 // mouse_char
 int mouse_char_init(mouse_dev_t *mouse);
 
-void mouse_char_exit(void);
+void mouse_char_exit(mouse_dev_t* mouse);
 
 ssize_t mouse_read(struct file *f, char __user *user, size_t l, loff_t *o);
 
@@ -43,7 +46,7 @@ ssize_t mouse_read(struct file *f, char __user *user, size_t l, loff_t *o);
 
 int set_led_colour( mouse_dev_t *mouse, struct led_packet led);
 
-int set_dpi(void);
+int set_dpi(mouse_dev_t *mouse,int dpi);
 long mouse_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
 #endif
 

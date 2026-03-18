@@ -18,7 +18,6 @@ static int __init mouse_moduel_init(void) {
 
 static void __exit mouse_moduel_exit(void) {
     usb_deregister(&mouse_driver);
-    mouse_char_exit();
 }
 
 module_init(mouse_moduel_init);
