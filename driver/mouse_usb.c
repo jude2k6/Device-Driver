@@ -3,7 +3,6 @@
 
 struct usb_device_id mouse_usb_table[] = {{USB_DEVICE(VENDOR_ID, PRODUCT_ID)}, {}};
 MODULE_DEVICE_TABLE(usb, mouse_usb_table);
-mouse_dev_t *mouse;
 
 static void process_data(mouse_dev_t *mouse, unsigned char *data) {
     s16 x = (s16) (data[2] | (data[3] << 8));
@@ -46,19 +45,19 @@ static void mouse_irq(struct urb *urb) {
     unsigned char *data = urb->transfer_buffer;
     memcpy(mouse->buffer, data, BUFFER_SIZE);
     mouse->read_ready = true;
-    wake_up_interruptible(&mouse->read_queue);
     printk("mouse len:%d | %02x %02x %02x %02x %02x %02x %02x %02x",
            urb->actual_length,
            mouse->buffer[0], mouse->buffer[1], mouse->buffer[2], mouse->buffer[3],
            mouse->buffer[4], mouse->buffer[5], mouse->buffer[6], mouse->buffer[7]);
     process_data(mouse, data);
     usb_submit_urb(urb, GFP_ATOMIC);
+    wake_up_interruptible(&mouse->read_queue);
 }
 
 static int mouse_probe(struct usb_interface *intfs, const struct usb_device_id *id) {
     if (intfs->cur_altsetting->desc.bInterfaceNumber != 0)
         return -ENODEV;
-    mouse = kzalloc(sizeof(mouse_dev_t), GFP_KERNEL);
+    mouse_dev_t *mouse = kzalloc(sizeof(mouse_dev_t), GFP_KERNEL);
     if (!mouse) {
         goto mouse_free;
     }
@@ -70,7 +69,13 @@ static int mouse_probe(struct usb_interface *intfs, const struct usb_device_id *
     struct usb_endpoint_descriptor *ep_des = &intfs->cur_altsetting->endpoint->desc;
     mouse->intfs = intfs;
     usb_set_intfdata(intfs, mouse);
+    init_waitqueue_head(&mouse->read_queue);
     mouse->urb = usb_alloc_urb(0,GFP_KERNEL);
+
+    if (mouse_char_init(mouse)) {
+        printk("Error registering char");
+        usb_deregister(&mouse_driver);
+    }
     if (!mouse->urb) {
         printk(KERN_ERR "Mouse urb not sent");
         goto urb_free;

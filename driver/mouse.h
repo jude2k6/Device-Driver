@@ -8,6 +8,10 @@
 #include <linux/types.h>
 #include <linux/slab.h>
 #include <linux/wait.h>
+#include "../include/shared_ioctl.h"
+#include "mouse_features.h"
+
+
 
 #define VENDOR_ID   0x046d
 #define PRODUCT_ID  0xc092
@@ -17,8 +21,9 @@
 typedef struct mouse_dev_t {
     struct usb_device *usb_dev;
     struct usb_interface *intfs;
-    struct input_dev *input_dev;
     struct urb *urb;
+    struct input_dev *input_dev;
+    struct cdev cdev;
     unsigned char *buffer;
     bool read_ready;
     struct wait_queue_head read_queue;
@@ -26,18 +31,19 @@ typedef struct mouse_dev_t {
 
 // mouse_usb
 extern struct usb_driver mouse_driver;
-extern mouse_dev_t *mouse;
 
 // mouse_char
-int mouse_char_init(void);
+int mouse_char_init(mouse_dev_t *mouse);
 
 void mouse_char_exit(void);
 
 ssize_t mouse_read(struct file *f, char __user *user, size_t l, loff_t *o);
 
-int set_led_colour(unsigned char r, unsigned char g, unsigned char b, unsigned char mode);
+
+
+int set_led_colour( mouse_dev_t *mouse, struct led_packet led);
 
 int set_dpi(void);
-
+long mouse_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
 #endif
 

@@ -5,7 +5,7 @@ project(Device_driver C)
 set(CMAKE_C_STANDARD 11)
 
 
-add_subdirectory(user)
+add_subdirectory(userLib)
 add_subdirectory(driver)
 
 

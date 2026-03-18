@@ -31,6 +31,8 @@ set(SRC
         mouse_usb.c
         mouse_driver.c
         mouse_features.c
+        mouse_features.h
+        ../include/shared_ioctl.h
 )
 
 # 4. Dummy target for CLion IntelliSense

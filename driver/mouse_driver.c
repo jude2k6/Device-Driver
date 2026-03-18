@@ -12,12 +12,7 @@ static int __init mouse_moduel_init(void) {
         printk("Error registering usb");
         return -result;
     }
-    result = mouse_char_init();
-    if (result) {
-        usb_deregister(&mouse_driver);
-        printk("Error registering char");
-        return -result;
-    }
+
     return 0;
 }
 
