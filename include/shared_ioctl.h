@@ -21,6 +21,7 @@ struct led_packet {
 };
 
 #define MOUSE_SET_LEDS  _IOW(DEV_MAGIC, LED_WRITE, struct led_packet)
-#define MOUSE_GET_LEDS  _IOR(DEV_MAGIC, LED_READ, int)
+#define MOUSE_SET_DPI   _IOW(DEV_MAGIC, DPI_WRITE, int)
+
 
 #endif //DEVICE_DRIVER_SHARED_IOCTL_H

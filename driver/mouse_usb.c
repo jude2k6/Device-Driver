@@ -115,7 +115,7 @@ static int mouse_probe(struct usb_interface *intfs, const struct usb_device_id *
 
     if (mouse_proc_init(mouse)) {
         printk("Error registering proc");
-        goto proc_fail;;
+        goto proc_fail;
     }
 
     printk("MOUSE BOUND");

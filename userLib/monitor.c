@@ -5,7 +5,7 @@ int main(void) {
     unsigned char data[DATA_SIZE];
 
     int fd = mouse_open();
-    if (fd<0) {
+    if (fd < 0) {
         return 1;
     }
 

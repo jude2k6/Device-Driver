@@ -24,7 +24,6 @@ int main(const int argc, char *argv[]) {
         }
 
         struct led_packet p = {
-            .mode = 0x01,
             .r = (unsigned char) atoi(argv[2]),
             .g = (unsigned char) atoi(argv[3]),
             .b = (unsigned char) atoi(argv[4]),

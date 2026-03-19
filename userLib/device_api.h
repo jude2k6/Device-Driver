@@ -13,8 +13,11 @@
 #define BTN_FORWARD_MASK 0x10
 
 int mouse_open(void);
+
 void mouse_close(int fd);
+
 int mouse_read_data(int fd, unsigned char *buffer);
+
 void mouse_print_event(const unsigned char *data);
 
 #endif // DEVICE_API_H

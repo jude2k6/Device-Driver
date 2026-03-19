@@ -20,7 +20,7 @@ int mouse_read_data(int fd, unsigned char *buffer) {
     if (n < 0) {
         perror("Failed to read from mouse device");
     }
-    return (int)n;
+    return (int) n;
 }
 
 /*
@@ -33,21 +33,21 @@ int mouse_read_data(int fd, unsigned char *buffer) {
  */
 void mouse_print_event(const unsigned char *data) {
     //Buttons (data[0])
-    if (data[0] & BTN_LEFT_MASK)    printf("[CLICK]  Left Button\n");
-    if (data[0] & BTN_RIGHT_MASK)   printf("[CLICK]  Right Button\n");
-    if (data[0] & BTN_MIDDLE_MASK)  printf("[CLICK]  Middle Button\n");
-    if (data[0] & BTN_BACK_MASK)    printf("[CLICK]  Side Button - Back\n");
+    if (data[0] & BTN_LEFT_MASK) printf("[CLICK]  Left Button\n");
+    if (data[0] & BTN_RIGHT_MASK) printf("[CLICK]  Right Button\n");
+    if (data[0] & BTN_MIDDLE_MASK) printf("[CLICK]  Middle Button\n");
+    if (data[0] & BTN_BACK_MASK) printf("[CLICK]  Side Button - Back\n");
     if (data[0] & BTN_FORWARD_MASK) printf("[CLICK]  Side Button - Forward\n");
 
     // Movement (data[2-3] = X, data[4-5] = Y)
-    short x = (short)(data[2] | (data[3] << 8));
-    short y = (short)(data[4] | (data[5] << 8));
+    short x = (short) (data[2] | (data[3] << 8));
+    short y = (short) (data[4] | (data[5] << 8));
     if (x != 0 || y != 0) {
         printf("[MOVE]   X: %-5d  Y: %d\n", x, y);
     }
 
     // Scroll wheel (data[6], signed)
-    signed char scroll = (signed char)data[6];
+    signed char scroll = (signed char) data[6];
     if (scroll > 0) printf("[SCROLL] Up   (%d)\n", scroll);
     if (scroll < 0) printf("[SCROLL] Down (%d)\n", scroll);
 }

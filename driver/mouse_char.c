@@ -9,7 +9,7 @@ ssize_t mouse_read(struct file *f, char __user *user_buffer, size_t l, loff_t *o
     mouse_dev_t *mouse = f->private_data;
     unsigned char buffer[8];
     if (wait_event_interruptible(mouse->read_queue, mouse->read_ready))
-        return -ERESTARTSYS;  // interrupted by signal e.g. Ctrl+C
+        return -ERESTARTSYS; // interrupted by signal e.g. Ctrl+C
     unsigned int flags;
     spin_lock_irqsave(&mouse->read_lock, flags);
     memcpy(buffer, mouse->buffer, 8);

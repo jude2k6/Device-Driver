@@ -7,7 +7,7 @@
 static struct proc_dir_entry *mouse_proc_entry;
 
 static ssize_t mouse_proc_read(struct file *file, char __user *user_buf, size_t count, loff_t *pos) {
-    mouse_dev_t *mouse = (mouse_dev_t *) file->private_data;
+    mouse_dev_t *mouse = file->private_data;
 
 
     char buf[512];
@@ -70,7 +70,7 @@ static const struct proc_ops mouse_proc_ops = {
 };
 
 int mouse_proc_init(mouse_dev_t *mouse) {
-    mouse-> proc_entry=  proc_create_data(PROC_NAME, 0444, NULL, &mouse_proc_ops, mouse);
+    mouse->proc_entry = proc_create_data(PROC_NAME, 0444, NULL, &mouse_proc_ops, mouse);
     if (!mouse->proc_entry) {
         printk(KERN_ERR "Failed to create proc");
         return -ENOMEM;
