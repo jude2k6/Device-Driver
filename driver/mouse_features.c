@@ -58,12 +58,13 @@ int set_mouse_dpi(const mouse_dev_t *mouse, const int dpi) {
     if (!buf)
         return -ENOMEM;
 
-    buf[0] = 0x11;
+    buf[0] = 0x10;
     buf[1] = 0xFF;
-    buf[2] = 0x60;
-    buf[3] = 0x1C;
-    buf[4] = (dpi >> 8) & 0xFF;
-    buf[5] = dpi & 0xFF;
+    buf[2] = 0x0A;
+    buf[3] = 0x3B;
+    buf[4] = 0x00;
+    buf[5] = (dpi >> 8) & 0xFF;
+    buf[6] = dpi & 0xFF;
 
     int ret = usb_control_msg(
         mouse->usb_dev,
