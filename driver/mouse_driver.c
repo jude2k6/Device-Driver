@@ -7,10 +7,18 @@
 
 static int __init mouse_moduel_init(void) {
     int result;
+
+    result = mouse_char_setup();
+    if (result) {
+        printk(KERN_ERR "Error setting up char device");
+        return result;
+    }
+
     result = usb_register(&mouse_driver);
     if (result) {
-        printk("Error registering usb");
-        return -result;
+        printk(KERN_ERR "Error registering usb");
+        mouse_char_teardown();
+        return result;
     }
 
     return 0;
@@ -18,6 +26,7 @@ static int __init mouse_moduel_init(void) {
 
 static void __exit mouse_moduel_exit(void) {
     usb_deregister(&mouse_driver);
+    mouse_char_teardown();
 }
 
 module_init(mouse_moduel_init);

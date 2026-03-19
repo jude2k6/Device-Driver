@@ -7,10 +7,7 @@
 #include "../include/shared_ioctl.h"
 
 
-
-int main(int argc, char *argv[]) {
-
-
+int main(const int argc, char *argv[]) {
     int fd = open("/dev/MOUSE", O_RDWR);
     if (fd < 0) {
         perror("failed to open cdev");
@@ -28,9 +25,9 @@ int main(int argc, char *argv[]) {
 
         struct led_packet p = {
             .mode = 0x01,
-            .r = (unsigned char)atoi(argv[2]),
-            .g = (unsigned char)atoi(argv[3]),
-            .b = (unsigned char)atoi(argv[4]),
+            .r = (unsigned char) atoi(argv[2]),
+            .g = (unsigned char) atoi(argv[3]),
+            .b = (unsigned char) atoi(argv[4]),
         };
 
         if (ioctl(fd, MOUSE_SET_LEDS, &p) < 0) {
@@ -39,11 +36,9 @@ int main(int argc, char *argv[]) {
             goto done;
         }
         printf("Colour set to r=%d g=%d b=%d\n", p.r, p.g, p.b);
-
     } else if (strcmp(argv[1], "dpi") == 0) {
         if (argc != 3) {
             fprintf(stderr, "dpi requires a value argument\n");
-            usage(argv[0]);
             ret = 1;
             goto done;
         }
@@ -61,10 +56,8 @@ int main(int argc, char *argv[]) {
             goto done;
         }
         printf("DPI set to %d\n", dpi);
-
     } else {
         fprintf(stderr, " unknown command '%s'\n", argv[1]);
-        usage(argv[0]);
         ret = 1;
     }
 

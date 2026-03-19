@@ -1,6 +1,6 @@
 #include "mouse.h"
 
-int set_led_colour(mouse_dev_t *mouse, struct led_packet led) {
+int set_led_colour(const mouse_dev_t *mouse, const struct led_packet led) {
     int ret;
     unsigned char *buf = kzalloc(20, GFP_KERNEL);
     if (!buf)
@@ -53,7 +53,7 @@ int set_led_colour(mouse_dev_t *mouse, struct led_packet led) {
     return (ret < 0) ? ret : 0;
 }
 
-int set_mouse_dpi(mouse_dev_t *mouse, int dpi) {
+int set_mouse_dpi(const mouse_dev_t *mouse, const int dpi) {
     unsigned char *buf = kzalloc(20, GFP_KERNEL);
     if (!buf)
         return -ENOMEM;
@@ -76,7 +76,7 @@ int set_mouse_dpi(mouse_dev_t *mouse, int dpi) {
     return (ret < 0) ? ret : 0;
 }
 
-long mouse_ioctl(struct file *file, unsigned int cmd, unsigned long arg) {
+long mouse_ioctl( struct file *file, const unsigned int cmd, const unsigned long arg) {
     int ret = 0;
     mouse_dev_t *mouse = file->private_data;
     switch (cmd) {

@@ -1,7 +1,5 @@
 add_executable(test_app
-        main.c
-        device_api.c
-        test.c
+        set.c
 )
 
 target_include_directories(test_app PRIVATE
