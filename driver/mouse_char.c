@@ -10,13 +10,16 @@ ssize_t mouse_read(struct file *f, char __user *user, size_t l, loff_t *o) {
     if (!mouse->read_ready) {
         wait_event_interruptible(mouse->read_queue, mouse->read_ready);
     }
-    mouse->read_ready = false;
+    mouse->read_ready = false; 
 
     printk("Data sent | %02x %02x %02x %02x %02x %02x %02x %02x",
 
            mouse->buffer[0], mouse->buffer[1], mouse->buffer[2], mouse->buffer[3],
            mouse->buffer[4], mouse->buffer[5], mouse->buffer[6], mouse->buffer[7]);
 
+    // return EFAULT if copying to userspace fails
+    if (copy_to_user(user_buffer, mouse->buffer, BUFFER_SIZE))
+        return -EFAULT;
 
     copy_to_user(user, mouse->buffer,BUFFER_SIZE);
     printk("Read Called");
