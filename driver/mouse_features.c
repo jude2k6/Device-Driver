@@ -79,11 +79,14 @@ int set_mouse_dpi(const mouse_dev_t *mouse, const int dpi) {
 long mouse_ioctl( struct file *file, const unsigned int cmd, const unsigned long arg) {
     int ret = 0;
     mouse_dev_t *mouse = file->private_data;
+    mutex_lock(&mouse->ioctl_lock);
     switch (cmd) {
         case MOUSE_SET_LEDS: {
             struct led_packet p;
-            if (copy_from_user(&p, (struct led_packet __user *) arg, sizeof(struct led_packet)))
+            if (copy_from_user(&p, (struct led_packet __user *) arg, sizeof(struct led_packet))) {
+                mutex_unlock(&mouse->ioctl_lock);
                 return -EFAULT;
+            }
             ret = set_led_colour(mouse, p);
             break;
         }
@@ -91,8 +94,11 @@ long mouse_ioctl( struct file *file, const unsigned int cmd, const unsigned long
             break;
         case MOUSE_SET_DPI: {
             int dpi_val;
-            if (copy_from_user(&dpi_val, (int __user *) arg, sizeof(int)))
+            if (copy_from_user(&dpi_val, (int __user *) arg, sizeof(int))) {
+                mutex_unlock(&mouse->ioctl_lock);
+
                 return -EFAULT;
+            }
             if (dpi_val < 200 || dpi_val > 8000) return -EINVAL;
             ret = set_mouse_dpi(mouse, dpi_val);
             break;
@@ -102,5 +108,7 @@ long mouse_ioctl( struct file *file, const unsigned int cmd, const unsigned long
         default:
             return -ENOTTY;
     }
+    mutex_unlock(&mouse->ioctl_lock);
+
     return ret;
 }

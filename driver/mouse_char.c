@@ -5,23 +5,19 @@ static struct class *mouse_class;
 static dev_t mouse_dev_base;
 
 
-ssize_t mouse_read(struct file *f, char __user *user, size_t l, loff_t *o) {
+ssize_t mouse_read(struct file *f, char __user *user_buffer, size_t l, loff_t *o) {
     mouse_dev_t *mouse = f->private_data;
-    if (!mouse->read_ready) {
-        wait_event_interruptible(mouse->read_queue, mouse->read_ready);
-    }
-    mouse->read_ready = false; 
-
-    printk("Data sent | %02x %02x %02x %02x %02x %02x %02x %02x",
-
-           mouse->buffer[0], mouse->buffer[1], mouse->buffer[2], mouse->buffer[3],
-           mouse->buffer[4], mouse->buffer[5], mouse->buffer[6], mouse->buffer[7]);
-
-    // return EFAULT if copying to userspace fails
-    if (copy_to_user(user_buffer, mouse->buffer, BUFFER_SIZE))
+    unsigned char buffer[8];
+    if (wait_event_interruptible(mouse->read_queue, mouse->read_ready))
+        return -ERESTARTSYS;  // interrupted by signal e.g. Ctrl+C
+    unsigned int flags;
+    spin_lock_irqsave(&mouse->read_lock, flags);
+    memcpy(buffer, mouse->buffer, 8);
+    mouse->read_ready = false;
+    spin_unlock_irqrestore(&mouse->read_lock, flags);
+    if (copy_to_user(user_buffer, buffer, 8))
         return -EFAULT;
 
-    copy_to_user(user, mouse->buffer,BUFFER_SIZE);
     printk("Read Called");
     return BUFFER_SIZE;
 }

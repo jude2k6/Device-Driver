@@ -42,10 +42,13 @@ static void mouse_irq(struct urb *urb) {
         return;
     }
     mouse_dev_t *mouse = urb->context;
-
     unsigned char *data = urb->transfer_buffer;
+
+    unsigned long flags;
+    spin_lock_irqsave(&mouse->read_lock, flags);
     memcpy(mouse->buffer, data, BUFFER_SIZE);
     mouse->read_ready = true;
+    spin_unlock_irqrestore(&mouse->read_lock, flags);
     printk("mouse len:%d | %02x %02x %02x %02x %02x %02x %02x %02x",
            urb->actual_length,
            mouse->buffer[0], mouse->buffer[1], mouse->buffer[2], mouse->buffer[3],
@@ -56,13 +59,17 @@ static void mouse_irq(struct urb *urb) {
 }
 
 static int mouse_probe(struct usb_interface *intfs, const struct usb_device_id *id) {
-    // Original value was 0, changed to 1 to handle the correct interface for bluetooth reciever
-    if (intfs->cur_altsetting->desc.bInterfaceNumber != 1)
+    if (intfs->cur_altsetting->desc.bInterfaceNumber != 0)
         return -ENODEV;
     mouse_dev_t *mouse = kzalloc(sizeof(mouse_dev_t), GFP_KERNEL);
     if (!mouse) {
         return -1;
     }
+
+    init_waitqueue_head(&mouse->read_queue);
+    mutex_init(&mouse->ioctl_lock);
+    spin_lock_init(&mouse->read_lock);
+
     mouse->buffer = kmalloc(BUFFER_SIZE, GFP_KERNEL);
     if (!mouse->buffer) {
         goto buffer_free;
@@ -71,7 +78,7 @@ static int mouse_probe(struct usb_interface *intfs, const struct usb_device_id *
     struct usb_endpoint_descriptor *ep_des = &intfs->cur_altsetting->endpoint->desc;
     mouse->intfs = intfs;
     usb_set_intfdata(intfs, mouse);
-    init_waitqueue_head(&mouse->read_queue);
+
     mouse->urb = usb_alloc_urb(0,GFP_KERNEL);
 
 
@@ -110,7 +117,6 @@ static int mouse_probe(struct usb_interface *intfs, const struct usb_device_id *
         printk("Error registering proc");
         goto proc_fail;;
     }
-
 
     printk("MOUSE BOUND");
     return 0;

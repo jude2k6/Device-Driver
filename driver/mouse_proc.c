@@ -70,7 +70,7 @@ static const struct proc_ops mouse_proc_ops = {
 };
 
 int mouse_proc_init(mouse_dev_t *mouse) {
-    mouse->proc_entry=  proc_create_data(PROC_NAME, 0444, NULL, &mouse_proc_ops, mouse);
+    mouse-> proc_entry=  proc_create_data(PROC_NAME, 0444, NULL, &mouse_proc_ops, mouse);
     if (!mouse->proc_entry) {
         printk(KERN_ERR "Failed to create proc");
         return -ENOMEM;

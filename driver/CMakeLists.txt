@@ -27,7 +27,6 @@ target_compile_definitions(kernel_headers INTERFACE
 set(SRC
         mouse_char.c
         mouse.h
-        ioctl_defs.h
         mouse_usb.c
         mouse_driver.c
         mouse_features.c
