@@ -13,10 +13,12 @@
 #include "mouse_features.h"
 
 
-
+// Original product id was 0xc092, changed to 0xc548 for the Logitech Logi Bolt Receiver.
 #define VENDOR_ID   0x046d
-#define PRODUCT_ID  0xc092
-#define BUFFER_SIZE 8
+#define PRODUCT_ID  0xc548
+
+// BUFFER_SIZE increased to 64 to handle more devices
+#define BUFFER_SIZE 64
 
 
 typedef struct mouse_dev_t {

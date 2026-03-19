@@ -80,7 +80,8 @@ static void mouse_irq(struct urb *urb) {
 }
 
 static int mouse_probe(struct usb_interface *intfs, const struct usb_device_id *id) {
-    if (intfs->cur_altsetting->desc.bInterfaceNumber != 0)
+    // Original value was 0, changed to 1 to handle the correct interface for bluetooth reciever
+    if (intfs->cur_altsetting->desc.bInterfaceNumber != 1)
         return -ENODEV;
     mouse_dev_t *mouse = kzalloc(sizeof(mouse_dev_t), GFP_KERNEL);
     if (!mouse) {

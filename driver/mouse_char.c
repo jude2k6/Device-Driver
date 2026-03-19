@@ -1,7 +1,3 @@
-
-
-
-
 #include "mouse.h"
 
 static struct class *mouse_class;
@@ -11,19 +7,19 @@ ssize_t mouse_read(struct file *f, char __user *user_buffer, size_t l, loff_t *o
     if (!mouse->read_ready) {
         wait_event_interruptible(mouse->read_queue, mouse->read_ready);
     }
-    mouse->read_ready = false; 
-
+    mouse->read_ready = false;
 
     printk("Data sent | %02x %02x %02x %02x %02x %02x %02x %02x",
-
            mouse->buffer[0], mouse->buffer[1], mouse->buffer[2], mouse->buffer[3],
            mouse->buffer[4], mouse->buffer[5], mouse->buffer[6], mouse->buffer[7]);
 
-
-    copy_to_user(user_buffer, mouse->buffer,BUFFER_SIZE);
+    // return EFAULT if copying to userspace fails
+    if (copy_to_user(user_buffer, mouse->buffer, BUFFER_SIZE))
+        return -EFAULT;
     printk("Read Called");
     return BUFFER_SIZE;
 }
+
 static int mouse_open(struct inode *inode, struct file *file)
 {
     printk(KERN_ALERT "Mouse char opened\n");
@@ -38,6 +34,7 @@ static int mouse_open(struct inode *inode, struct file *file)
 
     return 0;
 }
+
 static struct file_operations fops = {
     .owner = THIS_MODULE,
     .open = mouse_open,
