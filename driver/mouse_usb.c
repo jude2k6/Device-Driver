@@ -9,11 +9,13 @@ static void process_data(mouse_dev_t *mouse, unsigned char *data) {
     s16 y = (s16) (data[4] | (data[5] << 8));
 
     // regular input subsystem
-    input_report_key(mouse->input_dev, BTN_LEFT, data[0] & 0x01);
-    input_report_key(mouse->input_dev, BTN_RIGHT, data[0] & 0x02);
-    input_report_key(mouse->input_dev, BTN_MIDDLE, data[0] & 0x04);
-    input_report_key(mouse->input_dev, BTN_FORWARD, data[0] & 0x10);
-    input_report_key(mouse->input_dev, BTN_BACK, data[0] & 0x08);
+    // My mouse (logitech bluetooth) includes a HID report ID as data[0] (always 0x02), while the button state is at data[1]
+    // Other mice without a report ID would use data[0]
+    input_report_key(mouse->input_dev, BTN_LEFT, data[1] & 0x01);
+    input_report_key(mouse->input_dev, BTN_RIGHT, data[1] & 0x02);
+    input_report_key(mouse->input_dev, BTN_MIDDLE, data[1] & 0x04);
+    input_report_key(mouse->input_dev, BTN_FORWARD, data[1] & 0x10);
+    input_report_key(mouse->input_dev, BTN_BACK, data[1] & 0x08);
     input_report_rel(mouse->input_dev, REL_WHEEL, (s8) data[6]);
     input_report_rel(mouse->input_dev, REL_X, x);
     input_report_rel(mouse->input_dev, REL_Y, y);
