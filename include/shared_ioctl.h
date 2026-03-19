@@ -15,7 +15,6 @@
 #define DEV_MAGIC 42
 
 struct led_packet {
-    unsigned char mode;
     unsigned char r;
     unsigned char g;
     unsigned char b;
@@ -23,9 +22,5 @@ struct led_packet {
 
 #define MOUSE_SET_LEDS  _IOW(DEV_MAGIC, LED_WRITE, struct led_packet)
 #define MOUSE_GET_LEDS  _IOR(DEV_MAGIC, LED_READ, int)
-
-#define MOUSE_SET_DPI   _IOW(DEV_MAGIC, DPI_WRITE, int)
-#define MOUSE_GET_DPI   _IOR(DEV_MAGIC, DPI_READ, int)
-
 
 #endif //DEVICE_DRIVER_SHARED_IOCTL_H

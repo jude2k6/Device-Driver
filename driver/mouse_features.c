@@ -3,53 +3,47 @@
 int set_led_colour(const mouse_dev_t *mouse, const struct led_packet led) {
     int ret;
     unsigned char *buf = kzalloc(20, GFP_KERNEL);
-    if (!buf)
-        return -ENOMEM;
-
-    // Step 1 - colour packet
-    buf[0] = 0x11;
-    buf[1] = 0xFF;
-    buf[2] = 0x12;
-    buf[3] = 0x10;
-    buf[4] = 0x01;
-    buf[5] = led.r;
-    buf[6] = led.g;
-    buf[7] = led.b;
-    buf[8] = 0x02;
-    buf[9] = led.r;
-    buf[10] = led.g;
-    buf[11] = led.b;
-    buf[12] = 0x03;
-    buf[13] = led.r;
-    buf[14] = led.g;
-    buf[15] = led.b;
-    buf[16] = 0xFF;
-
-    ret = usb_control_msg(mouse->usb_dev,
-                          usb_sndctrlpipe(mouse->usb_dev, 0),
-                          0x09, 0x21, 0x0211, 1,
-                          buf, 20, USB_CTRL_SET_TIMEOUT);
-    printk(KERN_INFO "set_led_colour: colour packet returned %d\n", ret);
-    if (ret < 0) {
+    unsigned char *rbuf = kzalloc(20, GFP_KERNEL);
+    if (!buf || !rbuf) {
         kfree(buf);
-        return ret;
+        kfree(rbuf);
+        return -ENOMEM;
     }
 
+    buf[0] = 0x10; buf[1] = 0xFF; buf[2] = 0x0E;
+    buf[3] = 0x5B; buf[4] = 0x01; buf[5] = 0x03; buf[6] = 0x05;
+    ret = usb_control_msg(mouse->usb_dev,
+                          usb_sndctrlpipe(mouse->usb_dev, 0),
+                          0x09, 0x21, 0x0210, 1,
+                          buf, 20, USB_CTRL_SET_TIMEOUT);
+    if (ret < 0) goto done;
+
+    ret = usb_bulk_msg(mouse->usb_dev,
+                       usb_rcvbulkpipe(mouse->usb_dev, 0x82),
+                       rbuf, 20, NULL, 1000);
     msleep(10);
 
-    // Step 2 - commit packet
     memset(buf, 0, 20);
-    buf[0] = 0x11;
-    buf[1] = 0xFF;
-    buf[2] = 0x12;
-    buf[3] = 0x70;
-
+    buf[0] = 0x11; buf[1] = 0xFF; buf[2] = 0x0E; buf[3] = 0x1B;
+    buf[4] = 0x00; buf[5] = 0x01;
+    buf[6] = led.r; buf[7] = led.g; buf[8] = led.b;
+    buf[9]  = 0x00; buf[10] = 0x00; buf[11] = 0x00;
+    buf[12] = 0x00; buf[13] = 0x00; buf[14] = 0x00;
+    buf[15] = 0x00; buf[16] = 0x01; buf[17] = 0x00;
+    buf[18] = 0x00; buf[19] = 0x00;
     ret = usb_control_msg(mouse->usb_dev,
                           usb_sndctrlpipe(mouse->usb_dev, 0),
                           0x09, 0x21, 0x0211, 1,
                           buf, 20, USB_CTRL_SET_TIMEOUT);
-    printk(KERN_INFO "set_led_colour: commit returned %d\n", ret);
-    kfree(buf);
+    if (ret < 0) goto done;
+
+    ret = usb_bulk_msg(mouse->usb_dev,
+                       usb_rcvbulkpipe(mouse->usb_dev, 0x82),
+                       rbuf, 20, NULL, 1000);
+
+    done:
+        kfree(buf);
+    kfree(rbuf);
     return (ret < 0) ? ret : 0;
 }
 
@@ -91,8 +85,7 @@ long mouse_ioctl( struct file *file, const unsigned int cmd, const unsigned long
             ret = set_led_colour(mouse, p);
             break;
         }
-        case MOUSE_GET_LEDS:
-            break;
+
         case MOUSE_SET_DPI: {
             int dpi_val;
             if (copy_from_user(&dpi_val, (int __user *) arg, sizeof(int))) {
@@ -104,8 +97,7 @@ long mouse_ioctl( struct file *file, const unsigned int cmd, const unsigned long
             ret = set_mouse_dpi(mouse, dpi_val);
             break;
         }
-        case MOUSE_GET_DPI:
-            break;
+
         default:
             return -ENOTTY;
     }
